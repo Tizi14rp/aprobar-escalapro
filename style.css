@@ -142,6 +142,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
   scroll-snap-align: center;
   background: var(--bg-soft);
 }
+.reel {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  aspect-ratio: 9 / 16;
+  object-fit: contain;
+  background: #000;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
 .slide-count { color: var(--dim); font-size: 0.8rem; margin: -6px 0 10px; }
 
 .status { padding: 10px 12px; border-radius: 12px; background: var(--bg-soft); color: var(--dim); margin-bottom: 12px; font-size: 0.9rem; }

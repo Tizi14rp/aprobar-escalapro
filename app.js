@@ -154,10 +154,26 @@ async function renderPr(pr) {
   const images = (Array.isArray(media) ? media : [])
     .filter((f) => /^slide-\d+\.jpg$/.test(f.name))
     .sort((a, b) => parseInt(a.name.slice(6), 10) - parseInt(b.name.slice(6), 10));
+  const isReel = plan && plan.format === "reel";
+  const files = Array.isArray(media) ? media : [];
+  const reelFile = files.find((f) => f.name === "reel.mp4");
+  const coverFile = files.find((f) => f.name === "cover.jpg");
   const expected = plan ? plan.slides.length : 0;
-  const ready = plan && images.length === expected;
+  const ready = isReel ? Boolean(reelFile && coverFile) : plan && images.length === expected;
 
-  if (images.length) {
+  if (isReel && reelFile) {
+    const video = el("video", { class: "reel", controls: "", playsinline: "", preload: "metadata" });
+    card.append(video);
+    if (coverFile) {
+      gh(`${repoPath()}/contents/${coverFile.path}?ref=${sha}`, { raw: "blob" })
+        .then((b) => { const u = URL.createObjectURL(b); blobUrls.push(u); video.poster = u; })
+        .catch(() => {});
+    }
+    gh(`${repoPath()}/contents/${reelFile.path}?ref=${sha}`, { raw: "blob" })
+      .then((b) => { const u = URL.createObjectURL(b); blobUrls.push(u); video.src = u; })
+      .catch(() => card.append(el("div", { class: "status err", text: "No se pudo cargar el video." })));
+    card.append(el("p", { class: "slide-count", text: `Reel · ${expected} escenas${plan.narration === false ? "" : " · con voz (sintética)"}` }));
+  } else if (images.length) {
     const strip = el("div", { class: "slides" });
     card.append(strip);
     card.append(el("p", { class: "slide-count", text: `${images.length} imagen(es) · deslizá para ver todas` }));
@@ -181,7 +197,7 @@ async function renderPr(pr) {
       class: `status ${failed ? "err" : "warn"}`,
       text: failed
         ? "El render falló (texto que no entra o plan inválido). Pedí cambios o revisá el PR en GitHub."
-        : "Generando las imágenes… actualizá en un minuto.",
+        : isReel ? "Generando el video… tarda unos minutos, actualizá después." : "Generando las imágenes… actualizá en un minuto.",
     }));
   }
 
